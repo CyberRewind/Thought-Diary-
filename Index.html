@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABC Thought Diary Pro</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prata:wght@400&amp;family=Lato:wght@300;400;700&amp;display=swap" rel="stylesheet">
+  <style>
+    .diary-font { font-family: 'Prata', serif; }
+    .body-font { font-family: 'Lato', sans-serif; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideDown {
+      from { opacity: 0; max-height: 0; }
+      to { opacity: 1; max-height: 500px; }
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .entry-card {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(89, 89, 89, 0.15);
+    }
+    
+    .abc-section {
+      animation: slideDown 0.4s ease-out;
+    }
+    
+    .section-header {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .intensity-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    .toast {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    .delete-confirm {
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    input[type="range"] {
+      cursor: pointer;
+    }
+
+    .nav-tab {
+      position: relative;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      border-radius: 2px;
+    }
+
+    .ai-suggestion {
+      animation: slideUp 0.4s ease-out;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+      border-left: 3px solid #3b82f6;
+    }
+
+    .emotion-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    .chart-bar {
+      transition: all 0.3s ease;
+    }
+
+    .insight-card {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .modal-overlay {
+      animation: fadeIn 0.2s ease-out;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .loading-spinner {
+      animation: pulse 1.5s infinite;
+    }
+
+    .stat-value {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: #3b82f6;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full body-font">
+  <div id="app-container" class="h-full w-full overflow-auto" style="background: linear-gradient(135deg, #f8f6f3 0%, #faf8f5 50%, #f5f3f0 100%);">
+   <div class="max-w-4xl mx-auto px-4 py-10 relative"><!-- Header -->
+    <header class="text-center mb-8">
+     <h1 id="diary-title" class="diary-font text-5xl font-bold mb-2" style="color: #3b4a52;">ABC Thought Diary</h1>
+     <p id="subtitle-text" class="text-base opacity-70" style="color: #5a6b73;">Understanding Your Thoughts &amp; Emotions</p>
+    </header><!-- Navigation Tabs -->
+    <div class="flex gap-1 mb-8 overflow-x-auto pb-2 justify-center"><button type="button" class="nav-tab active px-6 py-2 text-sm font-semibold whitespace-nowrap" data-tab="diary" style="color: #3b82f6;">📝 Diary</button> <button type="button" class="nav-tab px-6 py-2 text-sm font-semibold whitespace-nowrap" data-tab="insights" style="color: #9ca3af;">📊 Insights</button> <button type="button" class="nav-tab px-6 py-2 text-sm font-semibold whitespace-nowrap" data-tab="settings" style="color: #9ca3af;">⚙️ Settings</button>
+    </div><!-- DIARY TAB -->
+    <div id="diary-tab" class="tab-content"><!-- Educational Info Card -->
+     <div class="glass-card rounded-2xl p-6 mb-8 shadow-sm border border-blue-100">
+      <div class="flex gap-3 items-start">
+       <span class="text-2xl">💡</span>
+       <div>
+        <h3 class="font-semibold mb-2" style="color: #3b82f6;">How This Works</h3>
+        <p class="text-sm leading-relaxed opacity-80" style="color: #5a6b73;"><strong>(A) Activating Event:</strong> Write down the situation objectively, like a camera would—just the facts. <br><strong>(B) Beliefs:</strong> What thoughts went through your mind? Identify your underlying beliefs and expectations. <br><strong>(C) Consequences:</strong> What feelings and physical sensations did you experience? Rate the intensity.</p>
+       </div>
+      </div>
+     </div><!-- New Entry Form -->
+     <div class="glass-card rounded-2xl p-8 mb-10 shadow-lg">
+      <h2 class="diary-font text-2xl font-semibold mb-8" style="color: #3b4a52;">New Analysis</h2><!-- Activating Event Section -->
+      <div class="abc-section mb-8">
+       <div class="section-header p-4 rounded-lg mb-4">
+        <h3 class="text-lg font-semibold flex items-center gap-2" style="color: #3b82f6;"><span class="text-xl">🎯</span> (A) Activating Event</h3>
+        <p class="text-xs mt-2 opacity-70">Describe the situation objectively—just the facts, like a video camera would record them</p>
+       </div><textarea id="activating-event-input" class="w-full h-24 p-4 rounded-xl border-2 border-gray-200 resize-none text-sm body-font" style="background: rgba(255,255,255,0.9); color: #374151;" placeholder="What situation triggered this feeling?"></textarea>
+       <div id="ai-suggestion-a" class="ai-suggestion rounded-lg p-4 mt-3 hidden">
+        <div class="flex gap-2 items-start"><span class="text-lg">✨</span>
+         <div class="text-sm" style="color: #3b82f6;"></div>
+        </div>
+       </div>
+      </div><!-- Beliefs Section -->
+      <div class="abc-section mb-8">
+       <div class="section-header p-4 rounded-lg mb-4">
+        <h3 class="text-lg font-semibold flex items-center gap-2" style="color: #3b82f6;"><span class="text-xl">🧠</span> (B) Beliefs &amp; Thoughts</h3>
+        <p class="text-xs mt-2 opacity-70">What were you thinking? What thoughts, beliefs, or expectations ran through your mind?</p>
+       </div><textarea id="beliefs-input" class="w-full h-24 p-4 rounded-xl border-2 border-gray-200 resize-none text-sm body-font" style="background: rgba(255,255,255,0.9); color: #374151;" placeholder="List the thoughts that went through your mind..."></textarea>
+       <div id="ai-suggestion-b" class="ai-suggestion rounded-lg p-4 mt-3 hidden">
+        <div class="flex gap-2 items-start"><span class="text-lg">✨</span>
+         <div class="text-sm" style="color: #3b82f6;"></div>
+        </div>
+       </div>
+      </div><!-- Consequences Section -->
+      <div class="abc-section mb-8">
+       <div class="section-header p-4 rounded-lg mb-4">
+        <h3 class="text-lg font-semibold flex items-center gap-2" style="color: #3b82f6;"><span class="text-xl">💓</span> (C) Consequences</h3>
+        <p class="text-xs mt-2 opacity-70">What feelings and physical sensations did you experience?</p>
+       </div>
+       <div class="space-y-4">
+        <div>
+         <label class="block text-sm font-medium mb-2" style="color: #5a6b73;">Feelings &amp; Emotions</label> <textarea id="feelings-input" class="w-full h-16 p-3 rounded-xl border-2 border-gray-200 resize-none text-sm body-font" style="background: rgba(255,255,255,0.9); color: #374151;" placeholder="e.g., anxious, sad, hurt, angry, embarrassed..."></textarea>
+        </div>
+        <div>
+         <label class="block text-sm font-medium mb-2" style="color: #5a6b73;">Emotional Intensity (0-100)</label>
+         <div class="flex items-center gap-4">
+          <input type="range" id="intensity-slider" min="0" max="100" value="50" class="flex-1" style="accent-color: #3b82f6;">
+          <div class="min-w-16 text-center">
+           <span id="intensity-value" class="text-2xl font-bold" style="color: #3b82f6;">50</span>
+           <p class="intensity-label" style="color: #9ca3af;">/100</p>
+          </div>
+         </div>
+        </div>
+        <div>
+         <label class="block text-sm font-medium mb-2" style="color: #5a6b73;">Physical Sensations &amp; Actions</label> <textarea id="physical-input" class="w-full h-16 p-3 rounded-xl border-2 border-gray-200 resize-none text-sm body-font" style="background: rgba(255,255,255,0.9); color: #374151;" placeholder="e.g., chest tightness, tension, went to bed, avoided people..."></textarea>
+        </div>
+       </div>
+       <div id="ai-suggestion-c" class="ai-suggestion rounded-lg p-4 mt-3 hidden">
+        <div class="flex gap-2 items-start"><span class="text-lg">✨</span>
+         <div class="text-sm" style="color: #3b82f6;"></div>
+        </div>
+       </div>
+      </div><button id="save-btn" type="button" class="w-full py-4 rounded-xl text-white font-semibold text-base transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);"> Save Analysis 📝 </button>
+      <p id="limit-warning" class="hidden text-center mt-3 text-sm" style="color: #dc2626;">Maximum entries reached (999). Please delete some entries to add more.</p>
+     </div><!-- Entries Section -->
+     <div id="entries-section">
+      <h2 class="diary-font text-2xl font-semibold mb-6" style="color: #3b4a52;">Your Analyses</h2>
+      <div id="entries-container" class="space-y-5"><!-- Entries will be rendered here -->
+      </div>
+      <p id="empty-state" class="text-center py-16 opacity-50 hidden"><span class="text-5xl block mb-4">📖</span> <span class="text-base">Start your ABC analysis to begin understanding your emotions...</span></p>
+     </div>
+    </div><!-- INSIGHTS TAB -->
+    <div id="insights-tab" class="tab-content hidden">
+     <div id="insights-content"><!-- Insights will be rendered here -->
+     </div>
+    </div><!-- SETTINGS TAB -->
+    <div id="settings-tab" class="tab-content hidden">
+     <div class="glass-card rounded-2xl p-8 shadow-lg">
+      <h2 class="diary-font text-2xl font-semibold mb-8" style="color: #3b4a52;">Reminder Settings</h2>
+      <div class="space-y-6"><!-- Reminders Enabled -->
+       <div class="flex items-center justify-between pb-6 border-b" style="border-color: #e5e7eb;">
+        <div>
+         <h3 class="font-semibold" style="color: #3b4a52;">Enable Reminders</h3>
+         <p class="text-xs mt-1 opacity-60" style="color: #9ca3af;">Get prompted to fill out your thought diary</p>
+        </div><input type="checkbox" id="reminders-toggle" class="w-5 h-5" style="accent-color: #3b82f6;">
+       </div><!-- Reminder Frequency -->
+       <div id="frequency-section" class="hidden"><label class="block text-sm font-semibold mb-3" style="color: #3b4a52;">Frequency</label>
+        <div class="space-y-2"><label class="flex items-center p-3 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-300 transition" style="background: rgba(255,255,255,0.5);"> <input type="radio" name="frequency" value="daily" class="mr-3" style="accent-color: #3b82f6;"> <span class="text-sm font-medium" style="color: #5a6b73;">Daily</span> </label> <label class="flex items-center p-3 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-300 transition" style="background: rgba(255,255,255,0.5);"> <input type="radio" name="frequency" value="weekly" class="mr-3" style="accent-color: #3b82f6;"> <span class="text-sm font-medium" style="color: #5a6b73;">Weekly (3x per week)</span> </label>
+        </div>
+       </div><!-- Reminder Time -->
+       <div id="time-section" class="hidden"><label class="block text-sm font-semibold mb-3" style="color: #3b4a52;">Reminder Time</label> <input type="time" id="reminder-time" class="w-full p-3 rounded-xl border-2 border-gray-200" style="background: rgba(255,255,255,0.9);">
+        <p class="text-xs mt-2 opacity-60" style="color: #9ca3af;">You'll receive a reminder at this time</p>
+       </div><!-- Save Settings -->
+       <div id="reminder-status" class="p-4 rounded-lg text-sm text-center hidden" style="background: rgba(34, 197, 94, 0.1); color: #16a34a;">
+        ✓ Reminders enabled! You'll get notifications to help you reflect.
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Toast notification -->
+   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-white text-sm font-medium shadow-lg hidden toast" style="background: #3b82f6;"></div>
+  </div>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      diary_title: 'ABC Thought Diary',
+      subtitle_text: 'Understanding Your Thoughts & Emotions',
+      background_color: '#f8f6f3',
+      primary_color: '#3b82f6',
+      text_color: '#5a6b73',
+      card_color: '#ffffff'
+    };
+
+    // State
+    let entries = [];
+    let isLoading = false;
+    let pendingDelete = null;
+    let reminders = {
+      enabled: false,
+      frequency: 'daily',
+      time: '09:00'
+    };
+
+    // AI Discovery Questions
+    const discoveryQuestions = {
+      activatingEvent: [
+        "What was I doing at the time?",
+        "Who else was involved?",
+        "What specifically happened that bothered me?",
+        "What did I see, hear, or experience?"
+      ],
+      beliefs: [
+        "What was I thinking about myself?",
+        "What was I thinking about this situation?",
+        "What does this say about me?",
+        "What might happen because of this?"
+      ],
+      consequences: [
+        "Did I have physical sensations (chest tightness, tension)?",
+        "What did I do in response to these feelings?",
+        "Did I avoid anything?",
+        "How did I treat others?"
+      ]
+    };
+
+    // Initialize Element SDK
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => {
+        // Update title
+        const titleEl = document.getElementById('diary-title');
+        if (titleEl) {
+          titleEl.textContent = config.diary_title || defaultConfig.diary_title;
+        }
+
+        // Update subtitle
+        const subtitleEl = document.getElementById('subtitle-text');
+        if (subtitleEl) {
+          subtitleEl.textContent = config.subtitle_text || defaultConfig.subtitle_text;
+        }
+
+        // Update button color
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+          const primary = config.primary_color || defaultConfig.primary_color;
+          saveBtn.style.background = `linear-gradient(135deg, ${primary} 0%, ${primary}dd 100%)`;
+        }
+      },
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => window.elementSdk.setConfig({ background_color: value })
+          },
+          {
+            get: () => config.card_color || defaultConfig.card_color,
+            set: (value) => window.elementSdk.setConfig({ card_color: value })
+          },
+          {
+            get: () => config.primary_color || defaultConfig.primary_color,
+            set: (value) => window.elementSdk.setConfig({ primary_color: value })
+          },
+          {
+            get: () => config.text_color || defaultConfig.text_color,
+            set: (value) => window.elementSdk.setConfig({ text_color: value })
+          }
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => config.font_family || defaultConfig.font_family,
+          set: (value) => window.elementSdk.setConfig({ font_family: value })
+        },
+        fontSizeable: {
+          get: () => config.font_size || defaultConfig.font_size,
+          set: (value) => window.elementSdk.setConfig({ font_size: value })
+        }
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ['diary_title', config.diary_title || defaultConfig.diary_title],
+        ['subtitle_text', config.subtitle_text || defaultConfig.subtitle_text]
+      ])
+    });
+
+    // Initialize Data SDK
+    const dataHandler = {
+      onDataChanged(data) {
+        entries = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        renderEntries();
+        renderInsights();
+      }
+    };
+
+    window.dataSdk.init(dataHandler);
+
+    // Load reminders from localStorage
+    function loadReminders() {
+      const saved = localStorage.getItem('diaryReminders');
+      if (saved) {
+        reminders = JSON.parse(saved);
+        updateReminderUI();
+      }
+    }
+
+    // Save reminders to localStorage
+    function saveReminders() {
+      localStorage.setItem('diaryReminders', JSON.stringify(reminders));
+      updateReminderUI();
+    }
+
+    // Update reminder UI
+    function updateReminderUI() {
+      const toggle = document.getElementById('reminders-toggle');
+      const frequencySection = document.getElementById('frequency-section');
+      const timeSection = document.getElementById('time-section');
+      const status = document.getElementById('reminder-status');
+      const timeInput = document.getElementById('reminder-time');
+
+      toggle.checked = reminders.enabled;
+      frequencySection.classList.toggle('hidden', !reminders.enabled);
+      timeSection.classList.toggle('hidden', !reminders.enabled);
+      status.classList.toggle('hidden', !reminders.enabled);
+
+      if (reminders.enabled) {
+        document.querySelector(`input[name="frequency"][value="${reminders.frequency}"]`).checked = true;
+        timeInput.value = reminders.time;
+      }
+    }
+
+    // Show toast message
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    // Format date
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // AI-powered suggestion generator
+    function generateAISuggestion(section) {
+      const activatingEvent = document.getElementById('activating-event-input').value.trim();
+      const beliefs = document.getElementById('beliefs-input').value.trim();
+      const feelings = document.getElementById('feelings-input').value.trim();
+      const physical = document.getElementById('physical-input').value.trim();
+
+      const questions = discoveryQuestions[section] || [];
+      const randomQ = questions[Math.floor(Math.random() * questions.length)];
+
+      let suggestion = '';
+      if (section === 'activatingEvent' && activatingEvent.length < 10) {
+        suggestion = '💭 Try adding more details: ' + randomQ;
+      } else if (section === 'beliefs' && beliefs.length < 10) {
+        suggestion = '💭 Reflect deeper: ' + randomQ;
+      } else if (section === 'consequences' && (feelings.length < 5 || physical.length < 5)) {
+        suggestion = '💭 Remember to note: ' + randomQ;
+      } else if (activatingEvent && beliefs && activatingEvent.includes('I') && beliefs.includes('I')) {
+        suggestion = '✨ Great self-reflection! You\'re identifying the core connection between events and thoughts.';
+      }
+
+      return suggestion;
+    }
+
+    // Show AI suggestion
+    function showAISuggestion(section) {
+      const suggestion = generateAISuggestion(section);
+      if (!suggestion) return;
+
+      const suggestionEl = document.getElementById(`ai-suggestion-${section.charAt(0).toLowerCase()}`);
+      if (suggestionEl) {
+        suggestionEl.querySelector('div:last-child').textContent = suggestion;
+        suggestionEl.classList.remove('hidden');
+      }
+    }
+
+    // Hide AI suggestion
+    function hideAISuggestion(section) {
+      const suggestionEl = document.getElementById(`ai-suggestion-${section.charAt(0).toLowerCase()}`);
+      if (suggestionEl) {
+        suggestionEl.classList.add('hidden');
+      }
+    }
+
+    // Extract emotion tags
+    function extractEmotionTags(feelings) {
+      const commonEmotions = ['anxious', 'sad', 'happy', 'angry', 'hurt', 'embarrassed', 'stressed', 'depressed', 'content', 'frustrated', 'worried', 'ashamed', 'confused', 'disappointed', 'excited', 'calm'];
+      const tags = [];
+      const lower = feelings.toLowerCase();
+      commonEmotions.forEach(emotion => {
+        if (lower.includes(emotion)) tags.push(emotion);
+      });
+      return tags.join(',');
+    }
+
+    // Create entry element
+    function createEntryElement(entry) {
+      const div = document.createElement('div');
+      div.className = 'entry-card glass-card rounded-2xl p-6 shadow-md';
+      div.dataset.entryId = entry.__backendId;
+
+      const isConfirming = pendingDelete === entry.__backendId;
+
+      div.innerHTML = `
+        <div class="flex justify-between items-start mb-4">
+          <span class="text-xs font-medium opacity-60" style="color: #9ca3af;">${formatDate(entry.created_at)}</span>
+          ${isConfirming ? `
+            <div class="flex gap-2 delete-confirm">
+              <button type="button" class="confirm-delete-btn px-3 py-1 rounded-full text-xs font-medium text-white" style="background: #dc2626;">Delete</button>
+              <button type="button" class="cancel-delete-btn px-3 py-1 rounded-full text-xs font-medium" style="background: #e5e7eb; color: #374151;">Cancel</button>
+            </div>
+          ` : `
+            <button type="button" class="delete-btn opacity-40 hover:opacity-100 transition-opacity text-lg bg-transparent border-none cursor-pointer" title="Delete entry">×</button>
+          `}
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wide mb-2" style="color: #3b82f6;">🎯 Activating Event</h4>
+            <p class="text-sm leading-relaxed whitespace-pre-wrap" style="color: #3b4a52;">${escapeHtml(entry.activating_event)}</p>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wide mb-2" style="color: #3b82f6;">🧠 Beliefs & Thoughts</h4>
+            <p class="text-sm leading-relaxed whitespace-pre-wrap" style="color: #3b4a52;">${escapeHtml(entry.beliefs)}</p>
+          </div>
+
+          <div class="border-t pt-4 space-y-3" style="border-color: #e5e7eb;">
+            <h4 class="text-xs font-bold uppercase tracking-wide" style="color: #3b82f6;">💓 Consequences</h4>
+
+            <div>
+              <p class="text-xs font-semibold mb-1" style="color: #5a6b73;">Feelings & Emotions</p>
+              <div class="mb-2">
+                ${entry.emotion_tags ? entry.emotion_tags.split(',').map(tag => `<span class="emotion-badge">${escapeHtml(tag)}</span>`).join('') : ''}
+              </div>
+              <p class="text-sm whitespace-pre-wrap" style="color: #3b4a52;">${escapeHtml(entry.consequences_feelings)}</p>
+            </div>
+
+            <div>
+              <p class="text-xs font-semibold mb-1" style="color: #5a6b73;">Intensity Level</p>
+              <div class="flex items-center gap-2">
+                <div class="flex-1 bg-gray-200 rounded-full h-2" style="background: linear-gradient(90deg, #dbeafe 0%, #3b82f6 ${entry.consequences_intensity}%);"></div>
+                <span class="text-sm font-bold" style="color: #3b82f6;">${entry.consequences_intensity}/100</span>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-xs font-semibold mb-1" style="color: #5a6b73;">Physical Sensations & Actions</p>
+              <p class="text-sm whitespace-pre-wrap" style="color: #3b4a52;">${escapeHtml(entry.consequences_physical)}</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      return div;
+    }
+
+    // Render entries
+    function renderEntries() {
+      const container = document.getElementById('entries-container');
+      const emptyState = document.getElementById('empty-state');
+
+      if (entries.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      const existingElements = new Map(
+        [...container.children].map(el => [el.dataset.entryId, el])
+      );
+
+      entries.forEach((entry, index) => {
+        const existingEl = existingElements.get(entry.__backendId);
+
+        if (existingEl) {
+          const newEl = createEntryElement(entry);
+          existingEl.innerHTML = newEl.innerHTML;
+          existingElements.delete(entry.__backendId);
+        } else {
+          const newEl = createEntryElement(entry);
+          newEl.style.animationDelay = `${index * 0.05}s`;
+          container.appendChild(newEl);
+        }
+      });
+
+      existingElements.forEach(el => el.remove());
+    }
+
+    // Render insights
+    function renderInsights() {
+      const container = document.getElementById('insights-content');
+
+      if (entries.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-16 opacity-50">
+            <p class="text-5xl block mb-4">📊</p>
+            <p class="text-base">Add entries to see your thought patterns and emotional trends...</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Calculate stats
+      const totalEntries = entries.length;
+      const avgIntensity = Math.round(entries.reduce((sum, e) => sum + parseInt(e.consequences_intensity), 0) / totalEntries);
+
+      // Extract emotions
+      const emotionMap = new Map();
+      entries.forEach(e => {
+        const tags = e.emotion_tags ? e.emotion_tags.split(',') : [];
+        tags.forEach(tag => {
+          emotionMap.set(tag, (emotionMap.get(tag) || 0) + 1);
+        });
+      });
+
+      const topEmotions = Array.from(emotionMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      // Calculate intensity trend
+      const recentEntries = entries.slice(0, 7).reverse();
+      const avgRecentIntensity = recentEntries.length > 0 
+        ? Math.round(recentEntries.reduce((sum, e) => sum + parseInt(e.consequences_intensity), 0) / recentEntries.length)
+        : 0;
+
+      const intensityTrend = avgRecentIntensity < avgIntensity ? '📉 Improving' : avgRecentIntensity > avgIntensity ? '📈 Rising' : '➡️ Stable';
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="insight-card glass-card rounded-2xl p-6 shadow-md text-center">
+              <div class="stat-value">${totalEntries}</div>
+              <p class="text-sm mt-2" style="color: #5a6b73;">Total Entries</p>
+            </div>
+            <div class="insight-card glass-card rounded-2xl p-6 shadow-md text-center">
+              <div class="stat-value">${avgIntensity}</div>
+              <p class="text-sm mt-2" style="color: #5a6b73;">Average Intensity</p>
+            </div>
+            <div class="insight-card glass-card rounded-2xl p-6 shadow-md text-center">
+              <div class="text-2xl font-bold" style="color: #10b981;">${intensityTrend}</div>
+              <p class="text-sm mt-2" style="color: #5a6b73;">Recent Trend (7 days)</p>
+            </div>
+          </div>
+
+          <!-- Top Emotions Chart -->
+          ${topEmotions.length > 0 ? `
+            <div class="glass-card rounded-2xl p-6 shadow-lg">
+              <h3 class="text-lg font-semibold mb-6" style="color: #3b4a52;">📊 Most Frequent Emotions</h3>
+              <div class="space-y-4">
+                ${topEmotions.map(([emotion, count]) => {
+                  const percentage = (count / totalEntries) * 100;
+                  return `
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium" style="color: #3b4a52;">${escapeHtml(emotion)}</span>
+                        <span class="text-xs font-semibold" style="color: #3b82f6;">${count} times</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="chart-bar bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Intensity Over Time -->
+          <div class="glass-card rounded-2xl p-6 shadow-lg">
+            <h3 class="text-lg font-semibold mb-6" style="color: #3b4a52;">📈 Intensity Trend (Last 10)</h3>
+            <div class="flex items-end justify-between h-40 gap-1">
+              ${entries.slice(0, 10).reverse().map((entry, idx) => {
+                const intensity = parseInt(entry.consequences_intensity);
+                const height = (intensity / 100) * 100;
+                const date = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                return `
+                  <div class="flex-1 flex flex-col items-center group relative">
+                    <div class="chart-bar w-full rounded-t-lg transition-all hover:opacity-80" style="height: ${height}%; background: linear-gradient(180deg, #3b82f6, #60a5fa); min-height: 4px;"></div>
+                    <span class="text-xs mt-2 opacity-60" style="color: #9ca3af;">${date}</span>
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded hidden group-hover:block whitespace-nowrap">${intensity}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Key Insights -->
+          <div class="glass-card rounded-2xl p-6 shadow-lg">
+            <h3 class="text-lg font-semibold mb-4" style="color: #3b4a52;">💡 Key Insights</h3>
+            <div class="space-y-3 text-sm" style="color: #5a6b73;">
+              ${topEmotions.length > 0 ? `<p>• Your most common emotion is <strong>${topEmotions[0][0]}</strong> (${topEmotions[0][1]} entries)</p>` : ''}
+              <p>• You've documented ${totalEntries} thought patterns</p>
+              <p>• Keep tracking to identify your unique thought patterns over time</p>
+              <p>• Regular reflection helps build emotional awareness and resilience</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Update limit warning
+    function updateLimitWarning() {
+      const warning = document.getElementById('limit-warning');
+      if (entries.length >= 999) {
+        warning.classList.remove('hidden');
+      } else {
+        warning.classList.add('hidden');
+      }
+    }
+
+    // Set loading state
+    function setLoading(loading) {
+      isLoading = loading;
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.disabled = loading;
+      saveBtn.textContent = loading ? 'Saving...' : 'Save Analysis 📝';
+    }
+
+    // Save analysis
+    async function saveAnalysis() {
+      const activatingEvent = document.getElementById('activating-event-input').value.trim();
+      const beliefs = document.getElementById('beliefs-input').value.trim();
+      const feelings = document.getElementById('feelings-input').value.trim();
+      const intensity = document.getElementById('intensity-slider').value;
+      const physical = document.getElementById('physical-input').value.trim();
+
+      if (!activatingEvent || !beliefs || !feelings || !physical) {
+        showToast('Please complete all sections before saving.');
+        return;
+      }
+
+      if (entries.length >= 999) {
+        showToast('Maximum entries reached. Please delete some entries.');
+        return;
+      }
+
+      setLoading(true);
+
+      const emotionTags = extractEmotionTags(feelings);
+
+      const result = await window.dataSdk.create({
+        activating_event: activatingEvent,
+        beliefs: beliefs,
+        consequences_feelings: feelings,
+        consequences_intensity: intensity,
+        consequences_physical: physical,
+        emotion_tags: emotionTags,
+        created_at: new Date().toISOString()
+      });
+
+      setLoading(false);
+
+      if (result.isOk) {
+        document.getElementById('activating-event-input').value = '';
+        document.getElementById('beliefs-input').value = '';
+        document.getElementById('feelings-input').value = '';
+        document.getElementById('intensity-slider').value = '50';
+        document.getElementById('intensity-value').textContent = '50';
+        document.getElementById('physical-input').value = '';
+
+        // Hide suggestions
+        document.getElementById('ai-suggestion-a').classList.add('hidden');
+        document.getElementById('ai-suggestion-b').classList.add('hidden');
+        document.getElementById('ai-suggestion-c').classList.add('hidden');
+
+        showToast('Analysis saved successfully! 🌟');
+        updateLimitWarning();
+      } else {
+        showToast('Failed to save. Please try again.');
+      }
+    }
+
+    // Delete analysis
+    async function deleteAnalysis(entry) {
+      const entryEl = document.querySelector(`[data-entry-id="${entry.__backendId}"]`);
+      if (entryEl) {
+        entryEl.style.opacity = '0.5';
+        entryEl.style.pointerEvents = 'none';
+      }
+
+      const result = await window.dataSdk.delete(entry);
+
+      if (result.isOk) {
+        showToast('Entry deleted');
+        pendingDelete = null;
+        updateLimitWarning();
+      } else {
+        if (entryEl) {
+          entryEl.style.opacity = '1';
+          entryEl.style.pointerEvents = 'auto';
+        }
+        showToast('Failed to delete. Please try again.');
+      }
+    }
+
+    // Tab navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+
+        // Update active tab
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active content
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+      });
+    });
+
+    // Event listeners
+    document.getElementById('save-btn').addEventListener('click', saveAnalysis);
+
+    document.getElementById('intensity-slider').addEventListener('input', (e) => {
+      document.getElementById('intensity-value').textContent = e.target.value;
+    });
+
+    // AI suggestions on input
+    document.getElementById('activating-event-input').addEventListener('blur', () => {
+      showAISuggestion('activatingEvent');
+    });
+
+    document.getElementById('activating-event-input').addEventListener('focus', () => {
+      hideAISuggestion('activatingEvent');
+    });
+
+    document.getElementById('beliefs-input').addEventListener('blur', () => {
+      showAISuggestion('beliefs');
+    });
+
+    document.getElementById('beliefs-input').addEventListener('focus', () => {
+      hideAISuggestion('beliefs');
+    });
+
+    document.getElementById('feelings-input').addEventListener('blur', () => {
+      showAISuggestion('consequences');
+    });
+
+    document.getElementById('feelings-input').addEventListener('focus', () => {
+      hideAISuggestion('consequences');
+    });
+
+    // Entry actions
+    document.getElementById('entries-container').addEventListener('click', (e) => {
+      const entryEl = e.target.closest('.entry-card');
+      if (!entryEl) return;
+
+      const entryId = entryEl.dataset.entryId;
+      const entry = entries.find(e => e.__backendId === entryId);
+      if (!entry) return;
+
+      if (e.target.classList.contains('delete-btn')) {
+        pendingDelete = entryId;
+        renderEntries();
+        return;
+      }
+
+      if (e.target.classList.contains('confirm-delete-btn')) {
+        deleteAnalysis(entry);
+        return;
+      }
+
+      if (e.target.classList.contains('cancel-delete-btn')) {
+        pendingDelete = null;
+        renderEntries();
+        return;
+      }
+    });
+
+    // Reminder settings
+    document.getElementById('reminders-toggle').addEventListener('change', (e) => {
+      reminders.enabled = e.target.checked;
+      saveReminders();
+    });
+
+    document.querySelectorAll('input[name="frequency"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        reminders.frequency = e.target.value;
+        saveReminders();
+      });
+    });
+
+    document.getElementById('reminder-time').addEventListener('change', (e) => {
+      reminders.time = e.target.value;
+      saveReminders();
+    });
+
+    // Allow Ctrl+Enter to save
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        const activeEl = document.activeElement;
+        if (activeEl && activeEl.tagName === 'TEXTAREA') {
+          e.preventDefault();
+          saveAnalysis();
+        }
+      }
+    });
+
+    // Initialize on load
+    loadReminders();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d0de8504119d7e8',t:'MTc3MTU4OTQ5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
